@@ -1,11 +1,24 @@
+import os
 import inspect
+import tempfile
+import subprocess
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 # constants
 INFINITY = float('inf')
 FOUR_WAY_DIRECTIONS = [(0, 1), (0, -1), (-1, 0), (1, 0)]
 EIGHT_WAY_DIRECTIONS = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)]
-
+TMP_FILE_PATH = f'{tempfile.gettempdir()}\previous_answers.txt'
 
 # helper functions used often
 def JUST_READ_FILE():
@@ -56,3 +69,55 @@ def FIND_ISLAND_SIZE(y, x, n, m, map, visited, pathSymbol=1):
 
     return res
 
+
+def PRINT_MATRIX(matrix):
+    print('----------------------')
+    for m in matrix:
+        print(m)
+    print('----------------------')
+
+
+def TRANSPOSE_MATRIX(matrix):
+    return [list(_) for _ in zip(*matrix)]
+
+
+def PRINT_ANSWER(answer):
+    COPY_TO_CLIPBOARD(answer)
+    if not os.path.exists(TMP_FILE_PATH):
+        f = open(TMP_FILE_PATH, 'x')
+    else:
+        f = open(TMP_FILE_PATH, 'r')
+    
+    lines = f.read().splitlines()
+    prevAnswers = [ans.strip() for ans in lines]
+
+    print('================================')
+    PRINT_SUCCESS(f'CURRENT ANSWER: {BOLD_TEXT(answer)}\n')
+    for i, ans in enumerate(prevAnswers):
+        print(f'{i + 1} RUN{"" if i == 0 else "S"} AGO - ANSWER: {ans}')
+    print('================================')
+    f.close()
+
+    prevAnswers.insert(0, answer)
+    f = open(TMP_FILE_PATH, 'w')
+    for i in range(min(len(prevAnswers), 5)):
+        f.write(f'{prevAnswers[i]}\n')
+    f.close()
+
+
+def PRINT_SUCCESS(txt):
+    print(f'{bcolors.OKGREEN}{txt}{bcolors.ENDC}')
+
+def PRINT_WARNING(txt):
+    print(f'{bcolors.WARNING}{txt}{bcolors.ENDC}')
+
+def PRINT_ERROR(txt):
+    print(f'{bcolors.FAIL}{txt}{bcolors.ENDC}')
+
+def BOLD_TEXT(txt):
+    return f'{bcolors.BOLD}{txt}{bcolors.ENDC}'
+
+
+def COPY_TO_CLIPBOARD(txt):
+    cmd=f'echo {str(txt).strip()}|clip'
+    return subprocess.check_call(cmd, shell=True)
