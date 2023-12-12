@@ -21,8 +21,8 @@ EIGHT_WAY_DIRECTIONS = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -
 TMP_FILE_PATH = f'{tempfile.gettempdir()}\previous_answers.txt'
 
 # helper functions used often
-def JUST_READ_FILE():
-    dayNumber = inspect.stack()[2].filename.split('\\')[-1].split('.')[0]
+def JUST_READ_FILE(index=1):
+    dayNumber = inspect.stack()[index].filename.split('\\')[-1].split('.')[0]
     f = open(f'{dayNumber}.txt', 'r')
     lines = f.read().splitlines()
     return lines
@@ -30,7 +30,7 @@ def JUST_READ_FILE():
 
 def PARSE_INPUT_INTO_MATRIX():
     res = []
-    lines = JUST_READ_FILE()
+    lines = JUST_READ_FILE(2)
     for line in lines:
         res.append(list(line.strip()))
     return res
