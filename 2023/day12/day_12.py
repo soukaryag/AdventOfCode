@@ -13,7 +13,9 @@ def substrDoesntWork(row, rowIdx, doesntWork):
     
     return False
 
-
+"""
+ENDED UP NOT USING THIS!
+"""
 # @lru_cache(maxsize=None)
 def getRowArrangements(row, emotionalDamage):
     res = 0
@@ -24,7 +26,7 @@ def getRowArrangements(row, emotionalDamage):
 
     while q:
         row, rowIdx = q.pop()
-        print(rowIdx, row)
+        # print(rowIdx, row)
         skip = False
 
         if rowIdx != 0:
@@ -61,9 +63,64 @@ def getRowArrangements(row, emotionalDamage):
             else:
                 q.append([row, rowIdx + 1])
 
-        print('====================')
+        # print('====================')
 
     return res
+
+
+"""
+Takes subset of full row and subset of broken group and the running broken group length
+Returns the total number of possible arrangements of broken groups in row
+"""
+@lru_cache(maxsize=None)
+def recurse(row, brokenGroups, currGroupLen=0):
+    if not brokenGroups and '#' not in row: 
+        return 1
+    elif not row and len(brokenGroups) == 1 and currGroupLen == brokenGroups[0]:
+        return 1
+    elif not row and not brokenGroups:
+        return 1
+    elif not row or not brokenGroups: 
+        return 0
+    
+    if currGroupLen > brokenGroups[0] or (currGroupLen > 0 and not brokenGroups):
+        return 0
+
+    res = 0    
+    if row[0] == '.':
+        if currGroupLen == 0:
+            # print("Counting as FIRST .\n")
+            res += recurse(row[1:], brokenGroups, 0)
+        else:
+            # print("Counting as .")
+            if brokenGroups[0] == currGroupLen:
+                # print("Completed a broken set!!!")
+                res += recurse(row[1:], brokenGroups[1:], 0)
+    elif row[0] == '#':
+        # print("Counting as #\n")
+        res += recurse(row[1:], brokenGroups, currGroupLen + 1)
+    elif row[0] == '?':
+        # print("Found a ?")
+        if currGroupLen == brokenGroups[0] or not brokenGroups:
+            # print("Counting as .\n")
+            # this means it should be '.'
+            # print("Completed a broken set!!!")
+            res += recurse(row[1:], brokenGroups[1:], 0)
+        elif currGroupLen < brokenGroups[0]:
+            # this means it should be '#'
+            if currGroupLen == 0:
+                # print("Counting as . or #\n")
+                res += recurse(row[1:], brokenGroups, 0) + recurse(row[1:], brokenGroups, 1)
+            elif currGroupLen > 0:
+                # print("Counting as #\n")
+                res += recurse(row[1:], brokenGroups, currGroupLen + 1)
+
+        else:
+            print("AHHH SOMETHING IS SUPER WRONG")
+
+    # print(''.join(row), "RESULT:", res)
+    return res
+
 
 
 def getGroupingsFromRow(row):
@@ -83,21 +140,21 @@ if __name__ == '__main__':
     records = []
     brokenGroups = []
     for line in lines:
-        record, brokenGroup = line.split(' ')
+        record, bG = line.split(' ')
 
+        # part 2
         records.append('?'.join([record.strip()] * 5))
-        brokenGroups.append([int(i) for i in brokenGroup.split(',') * 5])
+        brokenGroups.append([int(i) for i in bG.split(',') * 5])
 
+        # part 1
         # records.append(record.strip())
-        # brokenGroups.append(brokenGroup.strip())
-
-    # print(records, brokenGroups)
+        # brokenGroups.append(bG.strip())
 
     answer = 0
     for idx, row in enumerate(records):
-        tmp = getRowArrangements(row, brokenGroups[idx])
-        print(idx, tmp)
-        
-        answer += tmp
+        res = recurse(tuple(list(row)), tuple(brokenGroups[idx]))
+        # print(idx, res)
+       
+        answer += res
 
     PRINT_ANSWER(answer)
