@@ -100,7 +100,7 @@ def PRINT_ANSWER(answer):
 
     prevAnswers.insert(0, answer)
     f = open(TMP_FILE_PATH, 'w')
-    for i in range(min(len(prevAnswers), 5)):
+    for i in range(min(len(prevAnswers), 10)):
         f.write(f'{prevAnswers[i]}\n')
     f.close()
 
