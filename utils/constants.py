@@ -76,6 +76,19 @@ def PRINT_MATRIX(matrix):
         print(m)
     print('----------------------')
 
+def PRINT_MATRIX_NOARR(matrix):
+    print('----------------------')
+    for m in matrix:
+        print(''.join(m))
+    print('----------------------')
+
+
+def MATRIX_AS_STRING(matrix):
+    res = ''
+    for m in matrix:
+        res += ''.join(m)
+    
+    return res
 
 def TRANSPOSE_MATRIX(matrix):
     return [list(_) for _ in zip(*matrix)]
