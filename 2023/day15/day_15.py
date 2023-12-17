@@ -12,7 +12,7 @@ def hash(word):
     for c in word:
         value += ord(c)
         value *= 17
-        value = value %256
+        value = value % 256
 
     return value
 
@@ -70,6 +70,6 @@ if __name__ == '__main__':
                 
     answer = focusingPower(hashmap)
 
-    PRINT_ANSWER(answer)
+    PRINT_ANSWER(answer, False)
 
     

@@ -3,6 +3,7 @@ import inspect
 import tempfile
 import subprocess
 
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -82,6 +83,13 @@ def PRINT_MATRIX_NOARR(matrix):
         print(''.join(m))
     print('----------------------')
 
+def MATRIX_TO_STR(matrix):
+    res = ''
+    for m in matrix:
+        res += ''.join(m) + '\n'
+
+    return res
+
 
 def MATRIX_AS_STRING(matrix):
     res = ''
@@ -94,7 +102,7 @@ def TRANSPOSE_MATRIX(matrix):
     return [list(_) for _ in zip(*matrix)]
 
 
-def PRINT_ANSWER(answer):
+def PRINT_ANSWER(answer, showHistory=True):
     COPY_TO_CLIPBOARD(answer)
     if not os.path.exists(TMP_FILE_PATH):
         f = open(TMP_FILE_PATH, 'x')
@@ -106,8 +114,9 @@ def PRINT_ANSWER(answer):
 
     print('================================')
     PRINT_SUCCESS(f'CURRENT ANSWER: {BOLD_TEXT(answer)}\n')
-    for i, ans in enumerate(prevAnswers):
-        print(f'{i + 1} RUN{"" if i == 0 else "S"} AGO - ANSWER: {ans}')
+    if showHistory:
+        for i, ans in enumerate(prevAnswers):
+            print(f'{i + 1} RUN{"" if i == 0 else "S"} AGO - ANSWER: {ans}')
     print('================================')
     f.close()
 
