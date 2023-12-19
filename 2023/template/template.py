@@ -11,7 +11,7 @@ if __name__ == '__main__':
     for line in lines:
         matrix.append(list(line))
 
-    print(matrix)
+    PRINT_MATRIX_NOARR(matrix)
 
     answer = 0
 

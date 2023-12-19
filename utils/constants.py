@@ -2,6 +2,7 @@ import os
 import inspect
 import tempfile
 import subprocess
+from functools import lru_cache
 
 
 class bcolors:
@@ -41,6 +42,7 @@ def GET_MATRIX_DIMENSIONS(matrix):
     return len(matrix), len(matrix[0])
 
 
+@lru_cache(maxsize=None)
 def IS_INBOUNDS(y, x, n, m):
     return 0 <= y < n and 0 <= x < m
 
