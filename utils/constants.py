@@ -72,6 +72,9 @@ def FIND_ISLAND_SIZE(y, x, n, m, map, visited, pathSymbol=1):
 
     return res
 
+def PRINT_DICT(dict):
+    for k, v in dict.items():
+        print(k, v)
 
 def PRINT_MATRIX(matrix):
     print('----------------------')
@@ -103,6 +106,10 @@ def MATRIX_AS_STRING(matrix):
 def TRANSPOSE_MATRIX(matrix):
     return [list(_) for _ in zip(*matrix)]
 
+def PRINT_ANSWER_MAC(answer):
+    print('================================')
+    PRINT_SUCCESS(f'CURRENT ANSWER: {BOLD_TEXT(answer)}')
+    print('================================')
 
 def PRINT_ANSWER(answer, showHistory=True):
     COPY_TO_CLIPBOARD(answer)
