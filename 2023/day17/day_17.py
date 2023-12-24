@@ -1,151 +1,98 @@
 import sys
 sys.path.append('../..')
 from utils.constants import *
+from heapq import heappop, heappush
+from collections import defaultdict
 from functools import lru_cache
-import curses
-import time
 
-sys.setrecursionlimit(3500)
 
-dirShapes = {
-    (0, 1): '>',
-    (0,-1): '<',
-    (1, 0): 'v',
-    (-1, 0): '^'
-}
+def getNext():
+    global priorityQueue
+    while priorityQueue:
+        _, __, el = heappop(priorityQueue)
+        if el:
+            del lookupTable[el]
+            return el
+        
+    return None
 
-opposite = {
-    (0, 1): (0, -1),
-    (0, -1): (0, 1),
-    (1, 0): (-1, 0),
-    (-1, 0): (1, 0)
-}
 
+def addToQueue(el, priority=0):
+    global priorityQueue, lookupTable, uniqueValue
+    if lookupTable.get(el):
+        lookup = lookupTable.pop(el)
+        lookup[-1] = None
+    
+    uniqueValue += 1
+    lookupValue = [priority, uniqueValue, el]
+    lookupTable[el] = lookupValue
+    heappush(priorityQueue, lookupValue)
+    
 
 @lru_cache(maxsize=None)
-def calcHeatLoss(history):
-    if not history: return INFINITY
-    # y, x = history[0]
-    # return matrix[y][x] + calcHeatLoss(history[1:])
-
-    res = 0
-    for h in history:
-        curr = h[0]
-        if not IS_INBOUNDS(curr[0], curr[1], n, m): return INFINITY
-        res += matrix[curr[0]][curr[1]]
-
-    return res
-
-
-@lru_cache(maxsize=None)
-def minimizeHeatLossPath(coords, direction, straightSteps, past):
-    y, x = coords
-    # if y == 1 and x == 2 and direction == (1, 0):
-    #     print(y, x, direction, straightSteps)
-
-    if len(past) > 167:
-        print('!!!', coords, past)
-        exit()
-
-    if y == n - 1 and x == m - 1:
-        print(y, x, dirShapes.get(direction), straightSteps, matrix[y][x], "END!!")
-        cache[(coords, direction, straightSteps)] = (((y, x), direction),)
-        print(cache)
-        return (((y, x), direction),)
-    
-    if cache.get((coords, direction, straightSteps)):
-        print('1. CACHE HIT!!')
-        return cache.get((coords, direction, straightSteps))
-    
-    
-    res = INFINITY
-    bestHist = ()
-    for delY, delX in FOUR_WAY_DIRECTIONS:
-        # can't reverse
-        if (delY, delX) == opposite.get(direction):
-            continue
-
-        newCoords = (y + delY, x + delX)
-        newDir = (delY, delX)
-
-        # if same way, can only take 3 steps
-        if newDir == direction:
-            if straightSteps < 2 and IS_INBOUNDS(y + delY, x + delX, n, m) and newCoords not in past:
-                if cache.get((newCoords, newDir, straightSteps + 1)):
-                    print('2. CACHE HIT!!')
-                    bestHist = cache.get(newCoords, newDir, straightSteps + 1)
-                    tmpRes = calcHeatLoss(bestHist)
-                else:
-                    hist = minimizeHeatLossPath(newCoords, newDir, straightSteps + 1, past + ((y, x),))
-                    if hist:
-                        tmpRes = calcHeatLoss(hist)
-                        if tmpRes != 0 and tmpRes < res:
-                            res = tmpRes
-                            bestHist = hist
-            else:
-                continue
-        # otherwise go crazy go stupid
-        else:
-            if IS_INBOUNDS(y + delY, x + delX, n, m) and newCoords not in past:
-                if cache.get((newCoords, newDir, 1)):
-                    print('3. CACHE HIT!!')
-                    bestHist = cache.get(newCoords, newDir, 1)
-                    tmpRes = calcHeatLoss(bestHist)
-                else:
-                    hist = minimizeHeatLossPath(newCoords, newDir, 1, past + ((y, x),))
-                    if hist:
-                        tmpRes = calcHeatLoss(hist)
-                        if tmpRes != 0 and tmpRes < res:
-                            res = tmpRes
-                            bestHist = hist
-                
-    if res == INFINITY:
-        return False
+def getOrthogonals(coords):
+    if coords[1] == 0:
+        return [((0, -1), 1), ((0, 1), 1)]
     else:
-        cache[(coords, direction, straightSteps)] = (((y, x), direction),) + bestHist
-        return (((y, x), direction),) + bestHist
-
+        return [((-1, 0), 1), ((1, 0), 1)]
 
 
 if __name__ == '__main__':
-    global n, m, matrix, cache
+    global n, m, grid, priorityQueue, lookupTable, uniqueValue
     lines = JUST_READ_FILE()
-    # myWindow = curses.initscr()
 
-    matrix = []
+    MINIMUM_STRAIGHT = 0    #  4    for part 2
+    MAXIMUM_STRAIGHT = 3    # 10    for part 2
+
+    grid = []
     for line in lines:
-        matrix.append([int(i) for i in list(line)])
+        grid.append([int(i) for i in list(line)])
 
-    n, m = len(matrix), len(matrix[0])
-    cache = {}
+    n, m = len(grid), len(grid[0])
+    endState = (n - 1, m - 1)
+    priorityQueue = []
+    lookupTable = {}
+    uniqueValue = 0
+
+    for i in range(n):
+        for j in range(m):
+            for dir in FOUR_WAY_DIRECTIONS:
+                for straight in range(1, MAXIMUM_STRAIGHT + 1):
+                    addToQueue((i, j, dir, straight), INFINITY)
+
+    startingElVert = (0, 0, (1, 0), 0)
+    startingElHor = (0, 0, (0, 1), 0)
+    addToQueue(startingElVert)
+    addToQueue(startingElHor)
+
+    totalHeatAtNode = defaultdict(lambda: INFINITY)     # tracks the minimum heat at a node
+    totalHeatAtNode[startingElVert] = 0
+    totalHeatAtNode[startingElHor] = 0
+
+    answer = 0
+    while True:
+        curr = getNext()
+        y, x, dir, straight = curr
+        if (y, x) == endState and straight >= MINIMUM_STRAIGHT:
+            answer = totalHeatAtNode.get(curr)
+            break
+
+        nextNodes = []
+        if straight >= MINIMUM_STRAIGHT:
+            nextNodes += getOrthogonals(dir)
+        if straight < MAXIMUM_STRAIGHT:
+            nextNodes.append((dir, straight + 1))
+
+        for deltas, strght in nextNodes:
+            dy, dx = deltas
+            newY, newX = y + dy, x + dx
+            newEl = (newY, newX, deltas, strght)
+            if IS_INBOUNDS(newY, newX, n, m):
+                newTotalHeat = totalHeatAtNode.get(curr, INFINITY) +  grid[newY][newX]
+                if newTotalHeat < totalHeatAtNode.get(newEl, INFINITY):
+                    totalHeatAtNode[newEl] = newTotalHeat
+                    addToQueue(newEl, newTotalHeat)
+
+
+    PRINT_ANSWER_MAC(answer)
     
-    start = (0, 0)
-    answer = INFINITY
-    for dir in [(0, 1), (1, 0)]:
-        cache = {}
-        if IS_INBOUNDS(start[0] + dir[0], start[1] + dir[1], n, m):
-            hist = minimizeHeatLossPath((start[0] + dir[0], start[1] + dir[1]), dir, 1, ((0,0),))
-            if hist:
-                printMap = [[str(matrix[i][j]) for j in range(m)] for i in range(n)]
-                # print('---')
-                currDir = dir
-                for h in hist:
-                    curr = h[0]
-                    currDir = h[1]
-                    # print(h)
-                    printMap[curr[0]][curr[1]] = dirShapes.get(currDir, '#')
-                    # myWindow.addstr(0, 0, MATRIX_TO_STR(printMap))
-                    # myWindow.refresh()
-                    # time.sleep(0.2)
-                    
-                # print('---')
-                # PRINT_MATRIX_NOARR(printMap)
-                curses.endwin()
-
-            tmpRes = calcHeatLoss(hist)
-            if tmpRes != 0:
-                answer = min(answer, tmpRes)
-        exit()
-
-    PRINT_ANSWER(answer)
-    # curses.endwin()
